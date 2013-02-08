@@ -8,9 +8,9 @@ using namespace openni;
 
 enum stream_type_t
 {
-    RGB_STREAM,
-    DEPTH_STREAM,
-    IR_STREAM
+    RGB,
+    DEPTH,
+    IR
 };
 
 class Sensor

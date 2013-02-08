@@ -18,17 +18,18 @@ Sensor::Sensor()
 	{
 		printf("Couldn't open device\n%s\n", OpenNI::getExtendedError());
         delete device_ ;
-	}    
+	}
 }
 
 int Sensor::initialize(stream_type_t type)
 {
     Status rc;
-    if(DEPTH_STREAM == type)
+    if(DEPTH == type)
     {
         depthStream_ = new VideoStream();
         if (device_->getSensorInfo(SENSOR_DEPTH) != NULL)
         {
+
             rc = depthStream_->create(*device_, SENSOR_DEPTH);
             if (rc != STATUS_OK)
             {
@@ -37,6 +38,7 @@ int Sensor::initialize(stream_type_t type)
                 delete depthStream_ ;
                 return -1;
             }
+            
         }
 
         rc = depthStream_->start();
@@ -47,17 +49,16 @@ int Sensor::initialize(stream_type_t type)
             delete depthStream_ ;
             return-1;
         }
-        
+
         depthFrame_ = new VideoFrameRef();
     }
-    
-    
+
     return 0;
 }
 
 Sensor::~Sensor()
 {
-    
+
     if(depthStream_)
     {
         depthStream_->stop();
@@ -76,27 +77,27 @@ Sensor::~Sensor()
         delete rgbFrame_;
     if(device_)
         delete device_;
-        
+
     OpenNI::shutdown();
 }
 
 int Sensor::getWidth(stream_type_t type)
 {
-    if (DEPTH_STREAM == type)
+    if (DEPTH == type)
         return depthFrame_->getWidth();
-    else if (RGB_STREAM == type)
+    else if (RGB == type)
         return rgbFrame_->getWidth();
-    
+
     return -1;
 }
 
 int Sensor::getHeight(stream_type_t type)
 {
-    if (DEPTH_STREAM == type)
+    if (DEPTH == type)
         return depthFrame_->getHeight();
-    else if (RGB_STREAM == type)
+    else if (RGB == type)
         return rgbFrame_->getHeight();
-    
+
     return -1;
 }
 
@@ -107,11 +108,11 @@ uint16_t* Sensor::getDepthFrame()
     {
         printf("Wait failed\n");
     }
-    
+
     if (depthFrame_->getVideoMode().getPixelFormat() != PIXEL_FORMAT_DEPTH_1_MM && depthFrame_->getVideoMode().getPixelFormat() != PIXEL_FORMAT_DEPTH_100_UM)
     {
         printf("Unexpected frame format\n");
     }
-    
+
     return (uint16_t*) depthFrame_->getData();
 }
