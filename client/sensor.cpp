@@ -38,7 +38,7 @@ int Sensor::initialize(stream_type_t type)
                 delete depthStream_ ;
                 return -1;
             }
-            
+            depthStream_->setMirroringEnabled(false);
         }
 
         rc = depthStream_->start();
