@@ -29,7 +29,6 @@ int Sensor::initialize(stream_type_t type)
         depthStream_ = new VideoStream();
         if (device_->getSensorInfo(SENSOR_DEPTH) != NULL)
         {
-
             rc = depthStream_->create(*device_, SENSOR_DEPTH);
             if (rc != STATUS_OK)
             {
