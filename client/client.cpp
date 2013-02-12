@@ -10,14 +10,14 @@ int main(int argc, char** argv)
     using namespace TUIO;
     using namespace std;
     
-    TuioServer* tuio = new TuioServer("128.62.211.140", 3333);
+    TuioServer* tuio = new TuioServer("10.0.1.2", 3333);
     TuioTime time;
     
     // initialize the sensor
     Sensor* sensor = new Sensor();
     sensor->initialize(DEPTH);
     
-    HandProcessor* proc = new HandProcessor(sensor, true);
+    HandProcessor* proc = new HandProcessor(sensor, false);
     
     std::vector<HandPoint> points;
 

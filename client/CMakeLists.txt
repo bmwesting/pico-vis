@@ -13,15 +13,15 @@ endif(COMMAND cmake_policy)
 set(CMAKE_CXX_FLAGS "-g -Wall")
 
 # OpenNI
-include_directories("/Users/brandt/Desktop/work/test/OpenNI2/Redist/OpenNI-2.1.0-x64/Include")
-link_directories ("/Users/brandt/Desktop/work/test/OpenNI2/Redist/OpenNI-2.1.0-x64/Redist")
+include_directories("/home/pi/test/OpenNI2/Include")
+#link_directories ("/home/pi/test/OpenNI2/Bin/Armv6l-Release")
+link_directories(".")
 set(LIBS ${LIBS} OpenNI2)
 
 # TUIO
-include_directories("/Users/brandt/Downloads/TUIO_CPP/TUIO")
-include_directories("/Users/brandt/Downloads/TUIO_CPP/oscpack")
-link_directories ("/Users/brandt/Downloads/TUIO_CPP")
-set(LIBS ${LIBS} OpenNI2)
+include_directories("/home/pi/test/TUIO_CPP/TUIO")
+include_directories("/home/pi/test/TUIO_CPP/oscpack")
+link_directories ("/home/pi/test/TUIO_CPP")
 
 FIND_PACKAGE(OpenCV REQUIRED)
 

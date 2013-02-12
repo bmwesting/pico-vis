@@ -1,6 +1,6 @@
 #include <cstdio>
 
-#include "sensor.h"
+#include "Sensor.h"
 
 using namespace openni;
 
@@ -27,8 +27,21 @@ int Sensor::initialize(stream_type_t type)
     if(DEPTH == type)
     {
         depthStream_ = new VideoStream();
-        if (device_->getSensorInfo(SENSOR_DEPTH) != NULL)
+        const SensorInfo* info = device_->getSensorInfo(SENSOR_DEPTH);
+        if (info != NULL)
         {
+
+            // choose the correct videomode
+            printf("Available video modes for this sensor:\n");
+            for(int i = 0; i < info->getSupportedVideoModes().getSize(); i++)
+            {
+                int xRes  = info->getSupportedVideoModes()[i].getResolutionX();
+                int yRes  = info->getSupportedVideoModes()[i].getResolutionY();
+                int fps   =  info->getSupportedVideoModes()[i].getFps();
+                int pixel = info->getSupportedVideoModes()[i].getPixelFormat();
+                printf("Video Mode %d: %dx%d at %d with pixel format=%d\n", i, xRes, yRes, fps, pixel);
+            }
+
             rc = depthStream_->create(*device_, SENSOR_DEPTH);
             if (rc != STATUS_OK)
             {
@@ -37,7 +50,21 @@ int Sensor::initialize(stream_type_t type)
                 delete depthStream_ ;
                 return -1;
             }
+
+            // turn off mirroring
             depthStream_->setMirroringEnabled(false);
+
+            // set video mode to option 6, (160x120 @ 30 (mm))
+            rc = depthStream_->setVideoMode(info->getSupportedVideoModes()[6]);
+            if (rc != STATUS_OK)
+            {
+                printf("Couldn't set video mode!\n%s\n", OpenNI::getExtendedError());
+                delete device_ ;
+                delete depthStream_ ;
+                return -1;
+            }
+
+
         }
 
         rc = depthStream_->start();

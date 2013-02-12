@@ -5,8 +5,12 @@ using namespace std;
 
 const float PI = 3.14159;
 
-const unsigned int XRES = 320;
-const unsigned int YRES = 240;
+const unsigned int XRES = 160;
+const unsigned int YRES = 120;
+
+// multiply the image by this in x and y
+const unsigned int SIZEFX = 2;
+const unsigned int SIZEFY = 2;
 
 // median blur factor
 const unsigned int MEDIAN_BLUR_K = 7;
@@ -100,7 +104,7 @@ std::vector<HandPoint> HandProcessor::processHands()
     Mat depthRaw(YRES, XRES, CV_16U);
     Mat depthShow(YRES, XRES, CV_8U);
     
-    Mat depthImage;
+    //Mat depthImage;
     
     std::vector<HandPoint> returnPoints;
     
@@ -108,12 +112,14 @@ std::vector<HandPoint> HandProcessor::processHands()
     depthRaw.convertTo(depthShow, CV_8U, 255.0/4096.0);
     
     if (debug_)
-        depthImage = depthShow.clone();
+        Mat depthImage = depthShow.clone();
     
     //depthShow = rotateMatrix(depthShow, 90);
     
     //static binary threshold
     depthShow = (depthShow > 20) & (depthShow < 35);
+
+    resize(depthShow, depthShow, Size(), SIZEFX, SIZEFY);
             
     medianBlur(depthShow, depthShow, MEDIAN_BLUR_K);
     Mat contour = depthShow.clone(); // used for further processing
@@ -133,12 +139,9 @@ std::vector<HandPoint> HandProcessor::processHands()
             if(area > 1200) // likely a hand
             {
                 
-                Scalar center = mean(contourMat);
-                Point centerPoint = Point(center.val[0], center.val[1]);
-                
                 // approximate the contour by a simple curve
                 vector<Point> approxCurve;
-                approxPolyDP(contourMat, approxCurve, 20, true);
+                approxPolyDP(contourMat, approxCurve, 10, true);
                 
                 // draw the contour
                 if (debug_)
@@ -162,7 +165,7 @@ std::vector<HandPoint> HandProcessor::processHands()
                 }
                 
                 // find the upper and lower points of the hull
-                int upper = 0, lower = 240;
+                int upper = 0, lower = YRES*SIZEFY;
                 for (int j = 0; j < hull.size(); j++)
                 {
                     if (approxCurve[j].y > upper) upper = approxCurve[j].y;
@@ -195,6 +198,8 @@ std::vector<HandPoint> HandProcessor::processHands()
                         
                         if (debug_)
                         {
+                            Scalar center = mean(contourMat);
+                            Point centerPoint = Point(center.val[0], center.val[1]);
                             circle(depthShow, Point2i(pt.x,pt.y), 4, Scalar(255, 0, 0), 3);
                             line(depthShow, Point(centerPoint.x - 100, cutoff), 
                                             Point(centerPoint.x + 100, cutoff), 
@@ -222,15 +227,12 @@ std::vector<HandPoint> HandProcessor::processHands()
     
     if (debug_)
     {
-        resize(depthShow, depthShow, Size(), 3, 3);
+        //resize(depthShow, depthShow, Size(), 3, 3);
 
         imshow("Processed Image", depthShow);
-        imshow("Depth Image", depthImage);
+        //imshow("Depth Image", depthImage);
     }
     
     return returnPoints;
 }
 
-
-        
-       
