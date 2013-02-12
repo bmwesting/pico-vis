@@ -21,6 +21,7 @@ struct thread_data
     int port;
 };
 
+// processes sensor data and passes fingertips to TUIO
 void* vision_thread(void* threadarg)
 {
     using namespace TUIO;
@@ -78,9 +79,30 @@ void* vision_thread(void* threadarg)
     delete proc;
 }
 
+// listens on a socket for jpg data
 void* cloud_thread(void* threadarg)
 {
 
+}
+
+// redraws the scene
+void draw(struct graphics& graphics)
+{
+
+}
+
+// creates a new texture and ID
+void generateTexture(struct image_struct& image_str)
+{
+    glDeleteTextures(1, image_str.id);
+    glGenTextures(1, image_str.id);
+    glBindTexture(GL_TEXTURE_2D, image_str.id);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image_str.width, image_str.height, 0,
+                    GL_RGB, GL_UNSIGNED_BYTE, image_str.image);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (GLfloat) GL_NEAREST);
+    glTexParamaterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (GLfloat) GL_NEAREST);
+    glTexCoordPointer(2, GL_FLOAT, 0, texCoords);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
 int main(int argc, char** argv)
@@ -147,6 +169,8 @@ int main(int argc, char** argv)
             graphics.new_c = 0;
             pthread_mutex_unlock(&mutex);
         }
+
+        draw(graphics);
     }
 
     return 0;
