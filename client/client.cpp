@@ -5,12 +5,32 @@
 
 #include "TuioServer.h"
 
-int main(int argc, char** argv)
+// holds the state of the rendering graphics
+struct graphics
+{
+    image_struct v_image; //rgb array showing cv results
+    image_struct c_image; //rgb array showing cloud vis
+    bool new_v; // is the vision image new (texture needs creating)?
+    bool new_c;
+};
+
+// used for thread communication
+struct thread_data
+{
+    std::string hostname;
+    int port;
+};
+
+void* vision_thread(void* threadarg)
 {
     using namespace TUIO;
     using namespace std;
+
+    struct thread_data *data = (struct thread_data *) threadarg;
+    string hostname = data->hostname;
+    int port = data->port;
     
-    TuioServer* tuio = new TuioServer("10.0.1.2", 3333);
+    TuioServer* tuio = new TuioServer(hostname.c_str(), port);
     TuioTime time;
     
     // initialize the sensor
@@ -19,14 +39,13 @@ int main(int argc, char** argv)
     
     HandProcessor* proc = new HandProcessor(sensor, false);
     
-    std::vector<HandPoint> points;
+    vector<HandPoint> points;
 
-    int key = 0;
-    while(key != 27 && key != 'q')
+    while(1)
     {
         points = proc->processHands();
         
-        printf("Number of points: %lu\n", points.size());
+        //printf("Number of points: %lu\n", points.size());
         
         time = TuioTime::getSessionTime();
         tuio->initFrame(time);
@@ -53,9 +72,82 @@ int main(int argc, char** argv)
         tuio->removeUntouchedStoppedCursors();
         tuio->commitFrame();
         
-        key = cv::waitKey(10);
     }
     
     delete sensor;
     delete proc;
+}
+
+void* cloud_thread(void* threadarg)
+{
+
+}
+
+int main(int argc, char** argv)
+{
+    bcm_host_init();
+
+    std::string hostname = "localhost";
+    int t_port = 3333; // tuio port
+    int c_port = 1234; // cloud port
+
+    if(argc > 1)
+    {
+        hostname = argv[1];
+        t_port = argv[2];
+        c_port = argv[3];
+    }
+
+    // serves as a lock for textures
+    thread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
+    // the graphics object holds the graphics state
+    struct graphics graphics;
+
+    // create data for vision thread
+    struct thread_data v_data;
+    v_data.hostname = hostname;
+    v_data.port = t_port;
+    v_data.lock = &mutex;
+    v_data.graphics = &graphics;
+
+    // create vision thread
+    pthread_t v_thread;
+    pthread_create(&v_thread, NULL, vision_thread, (void *) &v_data);
+    thread_detach(v_thread);
+
+    // create data for cloud thread
+    struct thread_data c_data;
+    c_data.hostname = hostname;
+    c_data.port = c_port;
+    c_data.lock = &mutex;
+    c_data.graphics = &graphics;
+
+    // create thread for cloud
+    pthread_t c_thread;
+    pthread_create(&c_thread, NULL, cloud_thread, (void*) &c_data);
+    thread_detach(c_thread);
+
+    // main loop
+    while (1)
+    {
+        if (graphics.new_v)
+        {
+            // upload the vision texture
+            pthread_mutex_lock(&mutex);
+            generateTexture(graphics.v_image);
+            graphics.new_v = 0;
+            pthread_mutex_unlock(&mutex);
+        }
+        if (graphics.new_c)
+        {
+            // upload the cloud texture
+            pthread_mutex_lock(&mutex);
+            generateTexture(graphics.c_image);
+            graphics.new_c = 0;
+            pthread_mutex_unlock(&mutex);
+        }
+    }
+
+    return 0;
 }
