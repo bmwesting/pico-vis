@@ -8,6 +8,12 @@
 
 #include <vector>
 
+enum debug_type_t
+{
+    DEBUG_OFF,
+    DEBUG_ON
+};
+
 // conversion from cvConvexityDefect
 struct ConvexityDefect
 {
@@ -27,16 +33,16 @@ class HandProcessor
 {
     public:
         HandProcessor();
-        HandProcessor(Sensor* sensor, bool debug);
+        HandProcessor(Sensor* sensor, debug_type_t);
         ~HandProcessor();
-        
+
         void findConvexityDefects(std::vector<cv::Point>& contour, std::vector<int>& hull, std::vector<ConvexityDefect>& convexDefects);
         cv::Mat rotateMatrix(const cv::Mat& source, double angle);
         std::vector<HandPoint> processHands();
-        
+
     private:
         Sensor* sensor_;
-        bool debug_;
+        debug_type_t debug_;
 };
 
 #endif

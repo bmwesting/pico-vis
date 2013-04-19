@@ -20,20 +20,20 @@ const float CUTOFF_FACTOR = 0.25;
 
 HandProcessor::HandProcessor()
 {
-    
+
 }
 
-HandProcessor::HandProcessor(Sensor* sensor, bool debug)
+HandProcessor::HandProcessor(Sensor* sensor, debug_type_t debug)
 {
     debug_ = debug;
     sensor_ = sensor;
-    
+
     HandProcessor();
 }
 
 HandProcessor::~HandProcessor()
 {
-    
+
 }
 
 void HandProcessor::findConvexityDefects(vector<Point>& contour, vector<int>& hull, vector<ConvexityDefect>& convexDefects)
@@ -103,30 +103,30 @@ std::vector<HandPoint> HandProcessor::processHands()
 {
     Mat depthRaw(YRES, XRES, CV_16U);
     Mat depthShow(YRES, XRES, CV_8U);
-    
+
     //Mat depthImage;
-    
+
     std::vector<HandPoint> returnPoints;
-    
+
     memcpy(depthRaw.data, sensor_->getDepthFrame(), XRES*YRES*2);
     depthRaw.convertTo(depthShow, CV_8U, 255.0/4096.0);
-    
+
     if (debug_)
         Mat depthImage = depthShow.clone();
-    
+
     //depthShow = rotateMatrix(depthShow, 90);
-    
+
     //static binary threshold
     depthShow = (depthShow > 20) & (depthShow < 35);
 
     resize(depthShow, depthShow, Size(), SIZEFX, SIZEFY);
-            
+
     medianBlur(depthShow, depthShow, MEDIAN_BLUR_K);
     Mat contour = depthShow.clone(); // used for further processing
-    
+
     if (debug_)
         cvtColor(depthShow, depthShow, CV_GRAY2RGB);
-            
+
     std::vector< std::vector<Point> > contours;
     findContours(contour, contours, CV_RETR_LIST, CV_CHAIN_APPROX_SIMPLE);
 
@@ -138,11 +138,11 @@ std::vector<HandPoint> HandProcessor::processHands()
 
             if(area > 1200) // likely a hand
             {
-                
+
                 // approximate the contour by a simple curve
                 vector<Point> approxCurve;
                 approxPolyDP(contourMat, approxCurve, 10, true);
-                
+
                 // draw the contour
                 if (debug_)
                 {
@@ -150,7 +150,7 @@ std::vector<HandPoint> HandProcessor::processHands()
                     debugContourV.push_back(approxCurve);
                     drawContours(depthShow, debugContourV, 0, Scalar(0, 128, 0), 3);
                 }
-                
+
                 vector<int> hull;
                 convexHull(Mat(approxCurve), hull, false, false);
 
@@ -163,7 +163,7 @@ std::vector<HandPoint> HandProcessor::processHands()
                         circle(depthShow, approxCurve[index], 3, Scalar(0,128,200), 2);
                     }
                 }
-                
+
                 // find the upper and lower points of the hull
                 int upper = 0, lower = YRES*SIZEFY;
                 for (int j = 0; j < hull.size(); j++)
@@ -171,9 +171,9 @@ std::vector<HandPoint> HandProcessor::processHands()
                     if (approxCurve[j].y > upper) upper = approxCurve[j].y;
                     if (approxCurve[j].y < lower) lower = approxCurve[j].y;
                 }
-                
+
                 int cutoff = upper - (upper - lower)*CUTOFF_FACTOR;
-                
+
                 // find interior angles of hull corners
                 for (int j = 0; j < hull.size(); j++)
                 {
@@ -181,33 +181,33 @@ std::vector<HandPoint> HandProcessor::processHands()
                     int idx = hull[j];
                     int pdx = idx == 0 ? approxCurve.size() - 1 : idx - 1;
                     int sdx = idx == approxCurve.size() - 1 ? 0 : idx + 1;
-                    
+
                     Point v1 = approxCurve[sdx] - approxCurve[idx];
                     Point v2 = approxCurve[pdx] - approxCurve[idx];
-                    
+
                     float angle = acos( (v1.x*v2.x + v1.y*v2.y) / (norm(v1) * norm(v2)) ) * 180./PI;
-                                            
+
                     // low interior angle and within cutoff = accepted point
                     if (angle < 50 && approxCurve[idx].y < cutoff)
                     {
                         HandPoint pt;
                         pt.x = approxCurve[idx].x;
                         pt.y = approxCurve[idx].y;
-                        
+
                         returnPoints.push_back(pt);
-                        
+
                         if (debug_)
                         {
                             Scalar center = mean(contourMat);
                             Point centerPoint = Point(center.val[0], center.val[1]);
                             circle(depthShow, Point2i(pt.x,pt.y), 4, Scalar(255, 0, 0), 3);
-                            line(depthShow, Point(centerPoint.x - 100, cutoff), 
-                                            Point(centerPoint.x + 100, cutoff), 
+                            line(depthShow, Point(centerPoint.x - 100, cutoff),
+                                            Point(centerPoint.x + 100, cutoff),
                                             Scalar(255,255,255), 2);
                         }
                     }
                 }
-                
+
                 // find convexity defects
                 if (debug_)
                 {
@@ -224,7 +224,7 @@ std::vector<HandPoint> HandProcessor::processHands()
             }
         }
     }
-    
+
     if (debug_)
     {
         //resize(depthShow, depthShow, Size(), 3, 3);
@@ -232,7 +232,7 @@ std::vector<HandPoint> HandProcessor::processHands()
         imshow("Processed Image", depthShow);
         //imshow("Depth Image", depthImage);
     }
-    
+
     return returnPoints;
 }
 
