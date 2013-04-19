@@ -39,3 +39,9 @@ nosetests.xml
 *.a
 *.out
 *.bin
+
+# cmake
+*.make
+
+# other
+*.DS*
