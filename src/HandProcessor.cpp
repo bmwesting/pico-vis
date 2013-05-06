@@ -5,12 +5,12 @@ using namespace std;
 
 const float PI = 3.14159;
 
-const unsigned int XRES = 160;
-const unsigned int YRES = 120;
+const unsigned int XRES = 640;
+const unsigned int YRES = 480;
 
 // multiply the image by this in x and y
-const unsigned int SIZEFX = 2;
-const unsigned int SIZEFY = 2;
+const unsigned int SIZEFX = 1;
+const unsigned int SIZEFY = 1;
 
 // median blur factor
 const unsigned int MEDIAN_BLUR_K = 7;
@@ -18,8 +18,18 @@ const unsigned int MEDIAN_BLUR_K = 7;
 // cutoff factor (0.0-1.0), lower value means less points reported
 const float CUTOFF_FACTOR = 0.25;
 
+// number of bytes per pixel in raw depth image
+const unsigned int BPP = 2;
+
 HandProcessor::HandProcessor()
 {
+    std::cout << "In base constructor." << std::endl;
+    if(debug_)
+    {
+        namedWindow("Processed Image", CV_WINDOW_AUTOSIZE);
+        namedWindow("Depth Image", CV_WINDOW_AUTOSIZE);
+    }
+
 
 }
 
@@ -101,15 +111,16 @@ Mat HandProcessor::rotateMatrix(const Mat& source, double angle)
 
 std::vector<HandPoint> HandProcessor::processHands()
 {
+
     Mat depthRaw(YRES, XRES, CV_16U);
     Mat depthShow(YRES, XRES, CV_8U);
 
-    //Mat depthImage;
-
     std::vector<HandPoint> returnPoints;
 
-    memcpy(depthRaw.data, sensor_->getDepthFrame(), XRES*YRES*2);
+    memcpy(depthRaw.data, sensor_->getDepthFrame(), XRES*YRES*BPP);
     depthRaw.convertTo(depthShow, CV_8U, 255.0/4096.0);
+
+    //printf("%d\n", debug_);
 
     if (debug_)
         Mat depthImage = depthShow.clone();
@@ -228,7 +239,7 @@ std::vector<HandPoint> HandProcessor::processHands()
     if (debug_)
     {
         //resize(depthShow, depthShow, Size(), 3, 3);
-
+        //namedWindow( "Processed Image", CV_WINDOW_AUTOSIZE );
         imshow("Processed Image", depthShow);
         //imshow("Depth Image", depthImage);
     }

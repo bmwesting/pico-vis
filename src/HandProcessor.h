@@ -42,7 +42,10 @@ class HandProcessor
 
     private:
         Sensor* sensor_;
-        debug_type_t debug_;
+        debug_type_t debug_ = DEBUG_OFF;
+
+        cv::Mat depthRaw;
+        cv::Mat depthShow;
 };
 
 #endif

@@ -55,7 +55,7 @@ int Sensor::initialize(stream_type_t type)
             depthStream_->setMirroringEnabled(false);
 
             // set video mode to option 6, (160x120 @ 30 (mm))
-            rc = depthStream_->setVideoMode(info->getSupportedVideoModes()[6]);
+            rc = depthStream_->setVideoMode(info->getSupportedVideoModes()[4]);
             if (rc != STATUS_OK)
             {
                 printf("Couldn't set video mode!\n%s\n", OpenNI::getExtendedError());
@@ -63,7 +63,6 @@ int Sensor::initialize(stream_type_t type)
                 delete depthStream_ ;
                 return -1;
             }
-
 
         }
 
